@@ -1,3 +1,20 @@
+##########
+# README #
+##########
+
+# 1. download the images from the original github https://github.com/AlexOlsen/DeepWeeds
+# 2. in the github repo, go into labels and download/copy the labels.csv file
+# 3. organise your folders as shown
+# ├── data
+# │   └── images
+# │       ├── 20180322-133901-1.jpg
+# |       ├── ...
+# │       └── ______.jpg
+# ├── src
+# │   └── process_data.py
+# └── labels.csv
+# 4. run the python code from inside src directory, `python process_data.py`  
+
 import pandas as pd
 import os
 import shutil
