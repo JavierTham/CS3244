@@ -2,7 +2,7 @@ import tensorflow as tf
 import os
 import matplotlib.pyplot as plt
 import cv2
-from tensorflow.keras.preprocessing.image import ImageDataGenerator
+from keras.preprocessing.image import ImageDataGenerator
 
 save_dir = os.path.join("..", "data", "augmented_images")
 if not os.path.exists(save_dir):
