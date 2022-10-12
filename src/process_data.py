@@ -19,25 +19,26 @@ import pandas as pd
 import os
 import shutil
 
-labels = [
-    "Chinee apple",
-    "Lantana",
-    "Parkinsonia",
-    "Parthenium",
-    "Prickly acacia",
-    "Rubber vine",
-    "Siam weed",
-    "Snake weed",
-    "Negative"]
+labels = dict([
+    ("Chinee apple", 0),
+    ("Lantana", 1),
+    ("Parkinsonia", 2),
+    ("Parthenium", 3),
+    ("Prickly acacia", 4),
+    ("Rubber vine", 5),
+    ("Siam weed", 6),
+    ("Snake weed", 7),
+    ("Negative", 8)
+])
 
-df = pd.read_csv("../labels.csv")
+df = pd.read_csv(os.path.join("..", "labels.csv"))
 
 data_folder_path = os.path.join("..", "data")
 images_path = os.path.join("..", "data", "images")
 
 # create all the folders
-for label in labels:
-    os.makedirs(os.path.join(data_folder_path, label))
+for label, idx in labels.items():
+    os.makedirs(os.path.join(data_folder_path, str(idx)+"_"+label))
 
 def move_image(row):
     """
@@ -46,9 +47,10 @@ def move_image(row):
 
     filename = row[0]
     label = row[2]
+    idx = str(labels[label])
 
     src_path = os.path.join(images_path, filename)
-    dest_path = os.path.join(data_folder_path, label)
+    dest_path = os.path.join(data_folder_path, idx+"_"+label)
     shutil.move(src_path, dest_path)
 
 if __name__ == "__main__":
