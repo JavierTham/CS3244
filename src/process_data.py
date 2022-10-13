@@ -19,6 +19,8 @@ import pandas as pd
 import os
 import shutil
 
+from sklearn.model_selection import train_test_split
+
 labels = dict([
     ("Chinee apple", 0),
     ("Lantana", 1),
@@ -31,18 +33,34 @@ labels = dict([
     ("Negative", 8)
 ])
 
-df = pd.read_csv(os.path.join("..", "labels.csv"))
-
+# set paths
 data_folder_path = os.path.join("..", "data")
-images_path = os.path.join("..", "data", "images")
+train_folder_path = os.path.join(data_folder_path, "train")
+test_folder_path = os.path.join(data_folder_path, "test")
+images_path = os.path.join(data_folder_path, "images")
+labels_path = os.path.join("..", "labels.csv")
 
-# create all the folders
-for label, idx in labels.items():
-    os.makedirs(os.path.join(data_folder_path, str(idx)+"_"+label))
+# create directories
+os.makedirs(train_folder_path)
+os.makedirs(test_folder_path)
 
-def move_image(row):
+# split data into train and test
+df = pd.read_csv(labels_path)
+train_df, test_df = train_test_split(df, test_size=0.1, shuffle=True, stratify=df["Species"])
+
+# create all the folders for each label in train and test directory
+for i in ["train", "test"]:
+    for label, idx in labels.items():
+        target_dir = os.path.join(data_folder_path, i)
+        os.makedirs(os.path.join(target_dir, str(idx)+"_"+label))
+
+def move_image(row, train=False):
     """
     Takes in a row of the df and moves the image to the folder with its label
+    
+    args:
+    row - row of the dataframe
+    train - set to True if working on train set 
     """
 
     filename = row[0]
@@ -50,9 +68,11 @@ def move_image(row):
     idx = str(labels[label])
 
     src_path = os.path.join(images_path, filename)
-    dest_path = os.path.join(data_folder_path, idx+"_"+label)
+    dest_path = train_folder_path if train else test_folder_path
+    dest_path = os.path.join(dest_path, idx+"_"+label)
     shutil.move(src_path, dest_path)
 
 if __name__ == "__main__":
     # move all the pictures
-    df.apply(lambda row: move_image(row), axis=1)
+    train_df.apply(lambda row: move_image(row, train=True), axis=1)
+    test_df.apply(lambda row: move_image(row), axis=1)
