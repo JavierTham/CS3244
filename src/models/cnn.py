@@ -1,10 +1,10 @@
 import tensorflow as tf
 import tensorflow_datasets as tfds
 
-from tensorflow.keras.optimizers import SGD
-from tensorflow.keras import datasets, layers, models
-from tensorflow.keras.models import Sequential
-from tensorflow.keras.layers import Conv2D, MaxPooling2D, Dense, Flatten, Dropout
+from keras.optimizers import SGD
+from keras import datasets, layers, models
+from keras.models import Sequential
+from keras.layers import Conv2D, MaxPooling2D, Dense, Flatten, Dropout
 
 import numpy as np
 import matplotlib.pyplot as plt
@@ -49,6 +49,8 @@ model.add(Flatten())
 model.add(Dense(256, activation='relu'))
 model.add(Dense(9, activation='sigmoid'))
 
+optimizer = tf.keras.optimizers.SGD(lr=0.001)
+
 model.compile(optimizer = tf.keras.optimizers.SGD(lr=0.001), 
               loss='categorical_crossentropy', 
               metrics=['accuracy'])
@@ -72,7 +74,7 @@ def grad(model, inputs, targets):
 train_loss_results = []
 train_accuracy_results = []
 
-for epoch in range(num_epochs):
+for epoch in range(NUM_EPOCHS):
     epoch_loss_avg = tf.keras.metrics.Mean()
     epoch_accuracy = tf.keras.metrics.SparseCategoricalAccuracy()
 
