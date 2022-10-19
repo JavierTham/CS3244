@@ -12,14 +12,13 @@
 # │       └── ______.jpg
 # ├── src
 # │   └── process_data.py
-# └── labels.csv
+# ├── test_split.csv
+# └── train_split.csv
 # 4. run the python code from inside src directory, `python process_data.py`  
 
 import pandas as pd
 import os
 import shutil
-
-from sklearn.model_selection import train_test_split
 
 labels = dict([
     ("Chinee apple", 0),
@@ -38,15 +37,12 @@ data_folder_path = os.path.join("..", "data")
 train_folder_path = os.path.join(data_folder_path, "train")
 test_folder_path = os.path.join(data_folder_path, "test")
 images_path = os.path.join(data_folder_path, "images")
-labels_path = os.path.join("..", "labels.csv")
+train_labels_path = os.path.join("..", "train_split.csv")
+test_labels_path = os.path.join("..", "test_split.csv")
 
 # create directories
 os.makedirs(train_folder_path)
 os.makedirs(test_folder_path)
-
-# split data into train and test
-df = pd.read_csv(labels_path)
-train_df, test_df = train_test_split(df, test_size=0.1, shuffle=True, stratify=df["Species"], random_state=0)
 
 # create all the folders for each label in train and test directory
 for i in ["train", "test"]:
@@ -74,5 +70,7 @@ def move_image(row, train=False):
 
 if __name__ == "__main__":
     # move all the pictures
+    train_df = pd.read_csv(train_labels_path)
+    test_df = pd.read_csv(test_labels_path)
     train_df.apply(lambda row: move_image(row, train=True), axis=1)
     test_df.apply(lambda row: move_image(row), axis=1)
