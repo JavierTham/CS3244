@@ -50,7 +50,7 @@ for i in ["train", "test"]:
         target_dir = os.path.join(data_folder_path, i)
         os.makedirs(os.path.join(target_dir, str(idx)+"_"+label))
 
-def move_image(row, train=False):
+def move_image(row, row_idx, train=False):
     """
     Takes in a row of the df and moves the image to the folder with its label
     
@@ -62,15 +62,20 @@ def move_image(row, train=False):
     filename = row[0]
     label = row[2]
     idx = str(labels[label])
+    dest_folder_name = idx + "_" + label
 
     src_path = os.path.join(images_path, filename)
     dest_path = train_folder_path if train else test_folder_path
-    dest_path = os.path.join(dest_path, idx+"_"+label)
+    dest_path = os.path.join(dest_path, dest_folder_name, str(row_idx)+".png")
     shutil.move(src_path, dest_path)
+
+def get_row_idx(row):
+    print(row.name)
+    return row.name
 
 if __name__ == "__main__":
     # move all the pictures
     train_df = pd.read_csv(train_labels_path)
     test_df = pd.read_csv(test_labels_path)
-    train_df.apply(lambda row: move_image(row, train=True), axis=1)
-    test_df.apply(lambda row: move_image(row), axis=1)
+    train_df.apply(lambda row: move_image(row, get_row_idx(row), train=True), axis=1)
+    test_df.apply(lambda row: move_image(row, get_row_idx(row)), axis=1)
