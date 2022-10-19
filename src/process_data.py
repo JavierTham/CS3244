@@ -46,7 +46,7 @@ os.makedirs(test_folder_path)
 
 # split data into train and test
 df = pd.read_csv(labels_path)
-train_df, test_df = train_test_split(df, test_size=0.1, shuffle=True, stratify=df["Species"])
+train_df, test_df = train_test_split(df, test_size=0.1, shuffle=True, stratify=df["Species"], random_state=0)
 
 # create all the folders for each label in train and test directory
 for i in ["train", "test"]:
