@@ -10,7 +10,11 @@ import numpy as np
 import matplotlib.pyplot as plt
 import os
 
-num_epochs = 20
+num_epochs = 10
+
+gpus = tf.config.experimental.list_physical_devices('GPU')
+for gpu in gpus:
+    tf.config.experimental.set_memory_growth(gpu, True)
 
 train_data_path = os.path.join("..", "data", "train")
 test_data_path = os.path.join("..", "data", "test")
@@ -74,6 +78,18 @@ plt.suptitle("Loss", fontsize=20)
 plt.legend(loc="upper left")
 plt.show()
 
+# Evaluate Performance
+from tensorflow.keras.metrics import Precision, Recall, BinaryAccuracy
+pre = Precision()
+re = Recall()
+acc = BinaryAccuracy()
+for batch in test_dataset.as_numpy_iterator():
+    X, y = batch
+    yhat = model.predict(X)
+    pre.update_state(y, yhat)
+    re.update_state(y, yhat)
+    acc.update_state(y, yhat)
+print(f'Precision:{pre.result().numpy()}, Recall:{re.result().numpy()}, Accuracy:{acc.result().numpy()}')
 '''
 def loss(model, x, y, training):
     # training=training is needed only if there are layers with different
