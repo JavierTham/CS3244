@@ -1,63 +1,80 @@
 import tensorflow as tf
 import tensorflow_datasets as tfds
 
-from keras.optimizers import SGD
-from keras import datasets, layers, models
-from keras.models import Sequential
-from keras.layers import Conv2D, MaxPooling2D, Dense, Flatten, Dropout
+from tensorflow.keras.optimizers import SGD
+from tensorflow.keras import datasets, layers, models
+from tensorflow.keras.models import Sequential
+from tensorflow.keras.layers import Conv2D, MaxPooling2D, Dense, Flatten, Dropout, AveragePooling2D, Dropout
 
 import numpy as np
 import matplotlib.pyplot as plt
+import os
 
-np.random.seed(0)
-tf.random.set_seed(0)
+num_epochs = 20
 
-# hyperparameters
-NUM_EPOCHS = 1
-BATCH_SIZE = 64
-AUTOTUNE = tf.data.experimental.AUTOTUNE
+train_data_path = os.path.join("..", "data", "train")
+test_data_path = os.path.join("..", "data", "test")
 
-(ds_train_batch, ds_val_batch, ds_test_batch), ds_info = tfds.load('deep_weeds',
-                                                split=['train[:80]', 'train[80%:90%]', 'train[90%:]'],
-                                                shuffle_files=True, as_supervised=True, with_info=True)
+train_dataset, val_dataset = tf.keras.utils.image_dataset_from_directory(
+    train_data_path,
+    label_mode = "categorical",
+    validation_split=0.2,
+    subset = "both", # return both train and val datasets
+    seed = 0,
+    batch_size = 64
+)
 
-def normalise_img(img, label):
-    return tf.cast(img, tf.float32)/255.0, label
+test_dataset = tf.keras.utils.image_dataset_from_directory(
+    test_data_path,
+    label_mode = "categorical",
+    seed = 0,
+    batch_size = 64
+)
 
-ds_train_batch = ds_train_batch.map(normalise_img, num_parallel_calls=AUTOTUNE)
-ds_train_batch = ds_train_batch.cache()
-ds_train_batch = ds_train_batch.shuffle(ds_info.splits['train'].num_examples)
-ds_train_batch = ds_train_batch.batch(BATCH_SIZE)
-ds_train_batch = ds_train_batch.prefetch(AUTOTUNE)
+train_dataset = train_dataset.map(lambda x,y: (x/255, y))
+val_dataset = val_dataset.map(lambda x,y: (x/255, y))
+test_dataset = test_dataset.map(lambda x,y: (x/255, y))
 
-ds_val_batch = ds_val_batch.map(normalise_img, num_parallel_calls=AUTOTUNE)
-ds_val_batch = ds_val_batch.batch(128)
-ds_val_batch = ds_val_batch.prefetch(AUTOTUNE)
+classes = ['Chinee Apple', 'Lantana', 'Parkinsonia', 'Parthenium', 'Prickly Acacia', 'Rubber Vine', 'Siam Weed', 'Snake Weed', 'Negative']
 
 model = Sequential()
-model.add(Conv2D(16, (3,3), activation='relu', input_shape=(256,256,3)))
+model.add(Conv2D(16, (3,3), 1, activation='relu', input_shape=(256,256,3)))
 model.add(MaxPooling2D())
 
-model.add(Conv2D(32, (3,3), activation='relu'))
-model.add(MaxPooling2D())
+model.add(Conv2D(32, (3,3), 1, activation='relu'))
+model.add(Dropout(0.5))
 
-model.add(Conv2D(16, (3,3), activation='relu'))
+model.add(Conv2D(64, (3,3), 1, activation='relu'))
 model.add(MaxPooling2D())
+model.add(Dropout(0.5))
+
+model.add(Conv2D(16, (3,3), 1, activation='relu'))
+model.add(MaxPooling2D())
+model.add(Dropout(0.5))
 
 model.add(Flatten())
 
 model.add(Dense(256, activation='relu'))
 model.add(Dense(9, activation='sigmoid'))
 
-optimizer = tf.keras.optimizers.SGD(lr=0.001)
-
-model.compile(optimizer = tf.keras.optimizers.SGD(lr=0.001), 
+model.compile('adam', 
               loss='categorical_crossentropy', 
               metrics=['accuracy'])
 model.summary()
 
-loss_object = tf.keras.losses.SparseCategoricalCrossentropy(from_logits=True)
+logdir = 'logs'
+tensorboard_callback = tf.keras.callbacks.TensorBoard(log_dir = logdir)
+hist = model.fit(train_dataset, epochs = num_epochs, validation_data = val_dataset, callbacks = [tensorboard_callback])
 
+# Plotting performance
+fig = plt.figure()
+plt.plot(hist.history['loss'], color="teal", label = "loss")
+plt.plot(hist.history['val_loss'], color="orange", label = "val_loss")
+plt.suptitle("Loss", fontsize=20)
+plt.legend(loc="upper left")
+plt.show()
+
+'''
 def loss(model, x, y, training):
     # training=training is needed only if there are layers with different
     # behavior during training versus inference (e.g. Dropout).
@@ -100,3 +117,5 @@ for epoch in range(NUM_EPOCHS):
         print("Epoch {:03d}: Loss: {:.3f}, Accuracy: {:.3%}".format(epoch,
                                                                     epoch_loss_avg.result(),
                                                                     epoch_accuracy.result()))
+
+'''
