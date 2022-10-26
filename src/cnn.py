@@ -112,3 +112,85 @@ model_1.summary()
 ##  Model 2  ##
 ###############
 
+model_2 = Sequential()
+# 1st Convolution
+model_2.add(Conv2D(filters=32, kernel_size = (3,3), activation='relu',
+                   padding='same',
+                   kernel_initializer='he_normal', 
+                   kernel_regularizer='l2',
+                   input_shape=(256,256,3)))
+model_2.add(MaxPooling2D((2,2)))
+
+# 2nd Convolution
+model_2.add(Conv2D(64, (3,3), activation='relu', padding='same',
+                  kernel_initializer='he_normal', 
+                  kernel_regularizer='l2'))
+model_2.add(MaxPooling2D((2,2)))
+
+# 3rd Convolution
+model_2.add(Conv2D(128, (3,3), activation='relu', padding='same',
+                  kernel_initializer='he_normal', 
+                  kernel_regularizer='l2'))
+model_2.add(MaxPooling2D((2,2)))
+
+# 4th Convolution
+model_2.add(Conv2D(128, (3,3), activation='relu', padding='same',
+                  kernel_initializer='he_normal', 
+                  kernel_regularizer='l2'))
+model_2.add(MaxPooling2D((2,2)))
+
+# Flatten layer
+model_2.add(Flatten())
+
+# Fully connected layers
+model_2.add(Dense(64, activation='relu',
+                  kernel_initializer='he_normal', 
+                  kernel_regularizer='l2'))
+model_2.add(Dense(9, activation='softmax'))
+
+model_2.compile('adam', 
+              loss='categorical_crossentropy', 
+              metrics=['accuracy'])
+model_2.summary()
+
+# ---------------------------------------------------------------------------------------------------------------------------------------------------- #
+
+###############
+##  Model 3  ##
+###############
+
+model_3 = Sequential()
+
+# 1st Convolution
+model_3.add(Conv2D(16, (3, 3), activation='relu',input_shape=(256,256, 3)))
+model_3.add(Conv2D(16, (3, 3), activation='relu'))
+model_3.add(MaxPooling2D((2, 2)))
+
+# 2nd Convolution
+model_3.add(Conv2D(32, (3, 3), activation='relu'))
+model_3.add(Conv2D(32, (3, 3), activation='relu'))
+model_3.add(MaxPooling2D((2, 2)))
+
+# 3rd Convolution
+model_3.add(Conv2D(64, (3, 3), activation='relu'))
+model_3.add(Conv2D(64, (3, 3), activation='relu'))
+model_3.add(MaxPooling2D((2, 2)))
+
+# 4th Convolution
+model_3.add(Conv2D(128, (3, 3), activation='relu'))
+model_3.add(Conv2D(128, (3, 3), activation='relu'))
+model_3.add(MaxPooling2D((2, 2)))
+
+# Flattened the layer
+model_3.add(Flatten())
+
+# Fully connected layers
+model_3.add(Dense(64, activation='relu'))
+model_3.add(Dense(9, activation='softmax'))
+
+model_3.compile('adam', 
+              loss='categorical_crossentropy', 
+              metrics=['accuracy'])
+model_3.summary()
+
+# ---------------------------------------------------------------------------------------------------------------------------------------------------- #
