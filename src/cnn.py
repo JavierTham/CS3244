@@ -10,6 +10,36 @@ import numpy as np
 import matplotlib.pyplot as plt
 import os
 
+# Plotting visualisation
+def model_perf_vis(history):
+    
+    history_dict = history.history
+    train_loss_values = history_dict['loss']
+    val_loss_values = history_dict['val_loss']
+    train_accuracy = history_dict['accuracy']
+    val_accuracy = history_dict['val_accuracy']
+
+    fig, axis = plt.subplots(ncols=1, nrows=2, figsize=(7,7))
+    
+    # Loss plot 
+    
+    epochs = range(1, len(val_loss_values) + 1)
+    chart1 = sns.lineplot(ax=axis[0], x=epochs, y=train_loss_values, label='Training Loss')
+    
+    chart1 = sns.lineplot(ax=axis[0], x=epochs, y=val_loss_values, label='Validation Loss')
+    chart1.set(xlabel='Epochs', ylabel='Loss')
+    chart1.axes.set_title('Model Loss', fontsize=20)
+    chart1.grid(which='major', axis='y')
+    
+    chart2 = sns.lineplot(ax=axis[1], x=epochs, y=train_accuracy, label='Training Accuracy')
+    chart2 = sns.lineplot(ax=axis[1], x=epochs, y=val_accuracy, label='Validation Accuracy')
+    chart2.set(xlabel='Epochs', ylabel='Accuracy')
+    chart2.axes.set_title('Model Accuracy', fontsize=20)
+    chart2.grid(which='major', axis='y')
+    
+    plt.tight_layout()
+    plt.show()
+
 num_epochs = 10
 
 gpus = tf.config.experimental.list_physical_devices('GPU')
@@ -41,97 +71,39 @@ test_dataset = test_dataset.map(lambda x,y: (x/255, y))
 
 classes = ['Chinee Apple', 'Lantana', 'Parkinsonia', 'Parthenium', 'Prickly Acacia', 'Rubber Vine', 'Siam Weed', 'Snake Weed', 'Negative']
 
-model = Sequential()
-model.add(Conv2D(16, (3,3), 1, activation='relu', input_shape=(256,256,3)))
-model.add(MaxPooling2D())
+# ---------------------------------------------------------------------------------------------------------------------------------------------------- #
 
-model.add(Conv2D(32, (3,3), 1, activation='relu'))
-model.add(Dropout(0.5))
+###############
+##  Model 1  ##
+###############
 
-model.add(Conv2D(64, (3,3), 1, activation='relu'))
-model.add(MaxPooling2D())
-model.add(Dropout(0.5))
+model_1 = Sequential()
+# 1st Convolution
+model_1.add(Conv2D(filters=32, kernel_size = (3,3), activation='relu', input_shape=(256,256,3)))
+model_1.add(MaxPooling2D((2,2)))
 
-model.add(Conv2D(16, (3,3), 1, activation='relu'))
-model.add(MaxPooling2D())
-model.add(Dropout(0.5))
+# 2nd Convolution
+model_1.add(Conv2D(64, (3,3), activation='relu'))
+model_1.add(MaxPooling2D((2,2)))
 
-model.add(Flatten())
+# 3rd Convolution
+model_1.add(Conv2D(128, (3,3), activation='relu'))
+model_1.add(MaxPooling2D((2,2)))
 
-model.add(Dense(256, activation='relu'))
-model.add(Dense(9, activation='sigmoid'))
+# 4th Convolution
+model_1.add(Conv2D(128, (3,3), activation='relu'))
+model_1.add(MaxPooling2D((2,2)))
 
-model.compile('adam', 
+# Flatten layer
+model_1.add(Flatten())
+
+# Fully connected layers
+model_1.add(Dense(64, activation='relu'))
+model_1.add(Dense(9, activation='softmax'))
+
+model_1.compile('adam', 
               loss='categorical_crossentropy', 
               metrics=['accuracy'])
-model.summary()
+model_1.summary()
 
-logdir = 'logs'
-tensorboard_callback = tf.keras.callbacks.TensorBoard(log_dir = logdir)
-hist = model.fit(train_dataset, epochs = num_epochs, validation_data = val_dataset, callbacks = [tensorboard_callback])
-
-# Plotting performance
-fig = plt.figure()
-plt.plot(hist.history['loss'], color="teal", label = "loss")
-plt.plot(hist.history['val_loss'], color="orange", label = "val_loss")
-plt.suptitle("Loss", fontsize=20)
-plt.legend(loc="upper left")
-plt.show()
-
-# Evaluate Performance
-from tensorflow.keras.metrics import Precision, Recall, BinaryAccuracy
-pre = Precision()
-re = Recall()
-acc = BinaryAccuracy()
-for batch in test_dataset.as_numpy_iterator():
-    X, y = batch
-    yhat = model.predict(X)
-    pre.update_state(y, yhat)
-    re.update_state(y, yhat)
-    acc.update_state(y, yhat)
-print(f'Precision:{pre.result().numpy()}, Recall:{re.result().numpy()}, Accuracy:{acc.result().numpy()}')
-'''
-def loss(model, x, y, training):
-    # training=training is needed only if there are layers with different
-    # behavior during training versus inference (e.g. Dropout).
-    y_ = model(x, training=training)
-
-    return loss_object(y_true=y, y_pred=y_)
-
-def grad(model, inputs, targets):
-    with tf.GradientTape() as tape:
-        loss_value = loss(model, inputs, targets, training=True)
-    return loss_value, tape.gradient(loss_value, model.trainable_variables)
-
-# Keep results for plotting
-train_loss_results = []
-train_accuracy_results = []
-
-for epoch in range(NUM_EPOCHS):
-    epoch_loss_avg = tf.keras.metrics.Mean()
-    epoch_accuracy = tf.keras.metrics.SparseCategoricalAccuracy()
-
-    # Training loop
-    for iter in ds_train_batch:
-        # Optimize the model
-        x, y = iter[0], iter[1]
-        loss_value, grads = grad(model, x, y)
-        optimizer.apply_gradients(zip(grads, model.trainable_variables))
-
-        # Track progress
-        epoch_loss_avg.update_state(loss_value)  # Add current batch loss
-        # Compare predicted label to actual label
-        # training=True is needed only if there are layers with different
-        # behavior during training versus inference (e.g. Dropout).
-        epoch_accuracy.update_state(y, model(x, training=True))
-
-    # End epoch
-    train_loss_results.append(epoch_loss_avg.result())
-    train_accuracy_results.append(epoch_accuracy.result())
-
-    if epoch % 1 == 0:
-        print("Epoch {:03d}: Loss: {:.3f}, Accuracy: {:.3%}".format(epoch,
-                                                                    epoch_loss_avg.result(),
-                                                                    epoch_accuracy.result()))
-
-'''
+# ---------------------------------------------------------------------------------------------------------------------------------------------------- #
