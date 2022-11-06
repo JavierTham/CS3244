@@ -229,3 +229,89 @@ model_4.compile('adam',
               loss='categorical_crossentropy', 
               metrics=['accuracy'])
 model_4.summary()
+
+# ---------------------------------------------------------------------------------------------------------------------------------------------------- #
+
+###############
+##  Model 5  ##
+###############
+
+model_5 = Sequential()
+
+# 1st Convolution
+model_5.add(Conv2D(32, (3, 3), activation='relu',
+                        input_shape=(256, 256, 3)))
+model_5.add(MaxPooling2D((2, 2)))
+
+# 2nd Convolution
+model_5.add(Conv2D(64, (3, 3), activation='relu'))
+model_5.add(MaxPooling2D((2, 2)))
+
+# 3rd Convolution
+model_5.add(Conv2D(128, (3, 3), activation='relu'))
+model_5.add(MaxPooling2D((2, 2)))
+
+# 4th Convolution
+model_5.add(Conv2D(128, (3, 3), activation='relu'))
+model_5.add(MaxPooling2D((2, 2)))
+
+# Flattened the layer
+model_5.add(Flatten())
+
+# Fully connected layers
+model_5.add(Dense(64, activation='relu'))
+model_5.add(Dense(9, activation='softmax'))
+
+model_5.compile('adam', 
+              loss='categorical_crossentropy', 
+              metrics=['accuracy'])
+model_5.summary()
+
+# ---------------------------------------------------------------------------------------------------------------------------------------------------- #
+
+###############
+##  Model 6  ##
+###############
+
+model_6 = Sequential()
+
+# 1st Convolution block
+model_6.add(layers.Conv2D(16, (3, 3), activation='relu', padding='same', 
+                           input_shape=(256, 256, 3)))
+model_6.add(layers.Conv2D(16, (3, 3), activation='relu'))
+model_6.add(layers.MaxPooling2D((2, 2)))
+
+# 2nd Convolution block
+model_6.add(layers.Conv2D(32, (3, 3), activation='relu', padding='same'))
+model_6.add(layers.Conv2D(32, (3, 3), activation='relu'))
+model_6.add(layers.MaxPooling2D((2, 2)))
+
+# 3rd Convolution block
+model_6.add(layers.Conv2D(64, (3, 3), activation='relu', padding='same'))
+model_6.add(layers.Conv2D(64, (3, 3), activation='relu'))
+model_6.add(layers.MaxPooling2D((2, 2)))
+
+# 4th Convolution block
+model_6.add(layers.Conv2D(96, (3, 3), dilation_rate=(2,2), activation='relu', 
+                           padding='same'))
+model_6.add(layers.Conv2D(96, (3, 3), activation='relu'))
+model_6.add(layers.MaxPooling2D((2, 2)))
+
+# 5th Convolution block
+model_6.add(layers.Conv2D(128, (3, 3), dilation_rate=(2, 2), activation='relu', 
+                           padding='same'))
+model_6.add(layers.Conv2D(128, (3, 3), activation='relu'))
+model_6.add(layers.MaxPooling2D((2, 2)))
+
+# Flattened the layer
+model_6.add(layers.Flatten())
+
+# Fully connected layers
+model_6.add(layers.Dense(64, activation='relu'))
+model_6.add(layers.Dropout(0.4))
+model_6.add(layers.Dense(9, activation='softmax'))
+
+model_6.compile('adam', 
+              loss='categorical_crossentropy', 
+              metrics=['accuracy'])
+model_6.summary()
