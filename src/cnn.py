@@ -194,3 +194,38 @@ model_3.compile('adam',
 model_3.summary()
 
 # ---------------------------------------------------------------------------------------------------------------------------------------------------- #
+
+###############
+##  Model 4  ##
+###############
+
+model_4 = Sequential()
+
+# 1st Convolution
+model_4.add(Conv2D(32, (3, 3), activation='relu',
+                        input_shape=(256, 256, 3)))
+model_4.add(MaxPooling2D((2, 2)))
+
+# 2nd Convolution
+model_4.add(Conv2D(64, (3, 3), activation='relu'))
+model_4.add(MaxPooling2D((2, 2)))
+
+# 3rd Convolution
+model_4.add(Conv2D(128, (3, 3), activation='relu'))
+model_4.add(MaxPooling2D((2, 2)))
+
+# 4th Convolution
+model_4.add(Conv2D(128, (3, 3), activation='relu'))
+model_4.add(MaxPooling2D((2, 2)))
+
+# Flattened the layer
+model_4.add(Flatten())
+
+# Fully connected layers
+model_4.add(Dense(64, activation='relu'))
+model_4.add(Dense(9, activation='softmax'))
+
+model_4.compile('adam', 
+              loss='categorical_crossentropy', 
+              metrics=['accuracy'])
+model_4.summary()
