@@ -9,6 +9,17 @@ from tensorflow.keras.layers import Conv2D, MaxPooling2D, Dense, Flatten, Dropou
 import numpy as np
 import matplotlib.pyplot as plt
 import os
+import seaborn as sns
+
+num_epochs = 10
+pre = Precision()
+re = Recall()
+acc = CategoricalAccuracy()
+
+
+gpus = tf.config.experimental.list_physical_devices('GPU')
+for gpu in gpus:
+    tf.config.experimental.set_memory_growth(gpu, True)
 
 # Plotting visualisation
 def model_perf_vis(history):
@@ -40,7 +51,11 @@ def model_perf_vis(history):
     plt.tight_layout()
     plt.show()
 
-num_epochs = 10
+from tensorflow.python.client import device_lib
+def get_available_devices():
+    local_device_protos = device_lib.list_local_devices()
+    return [x.name for x in local_device_protos]
+print(get_available_devices()) 
 
 gpus = tf.config.experimental.list_physical_devices('GPU')
 for gpu in gpus:
@@ -65,9 +80,31 @@ test_dataset = tf.keras.utils.image_dataset_from_directory(
     batch_size = 64
 )
 
+train_dataset_128, val_dataset_128 = tf.keras.utils.image_dataset_from_directory(
+    train_data_path,
+    label_mode = "categorical",
+    validation_split=0.2,
+    subset = "both", # return both train and val datasets
+    seed = 0,
+    batch_size = 64,
+    image_size=(128, 128)
+)
+
+test_dataset_128 = tf.keras.utils.image_dataset_from_directory(
+    test_data_path,
+    label_mode = "categorical",
+    seed = 0,
+    batch_size = 64,
+    image_size=(128, 128)
+)
+
 train_dataset = train_dataset.map(lambda x,y: (x/255, y))
 val_dataset = val_dataset.map(lambda x,y: (x/255, y))
 test_dataset = test_dataset.map(lambda x,y: (x/255, y))
+
+train_dataset_128 = train_dataset_128.map(lambda x,y: (x/255, y))
+val_dataset_128 = val_dataset_128.map(lambda x,y: (x/255, y))
+test_dataset_128 = test_dataset_128.map(lambda x,y: (x/255, y))
 
 classes = ['Chinee Apple', 'Lantana', 'Parkinsonia', 'Parthenium', 'Prickly Acacia', 'Rubber Vine', 'Siam Weed', 'Snake Weed', 'Negative']
 
@@ -90,10 +127,6 @@ model_1.add(MaxPooling2D((2,2)))
 model_1.add(Conv2D(128, (3,3), activation='relu'))
 model_1.add(MaxPooling2D((2,2)))
 
-# 4th Convolution
-model_1.add(Conv2D(128, (3,3), activation='relu'))
-model_1.add(MaxPooling2D((2,2)))
-
 # Flatten layer
 model_1.add(Flatten())
 
@@ -106,92 +139,22 @@ model_1.compile('adam',
               metrics=['accuracy'])
 model_1.summary()
 
-# ---------------------------------------------------------------------------------------------------------------------------------------------------- #
+hist_1 = model_1.fit(train_dataset, epochs = num_epochs, validation_data = val_dataset)
 
-###############
-##  Model 2  ##
-###############
+model_perf_vis(hist_1)
 
-model_2 = Sequential()
-# 1st Convolution
-model_2.add(Conv2D(filters=32, kernel_size = (3,3), activation='relu',
-                   padding='same',
-                   kernel_initializer='he_normal', 
-                   kernel_regularizer='l2',
-                   input_shape=(256,256,3)))
-model_2.add(MaxPooling2D((2,2)))
+for batch in test_dataset.as_numpy_iterator():
+    X, y = batch
+    yhat = model_1.predict(X)
+    pre.update_state(y, yhat)
+    re.update_state(y, yhat)
+    acc.update_state(y, yhat)
 
-# 2nd Convolution
-model_2.add(Conv2D(64, (3,3), activation='relu', padding='same',
-                  kernel_initializer='he_normal', 
-                  kernel_regularizer='l2'))
-model_2.add(MaxPooling2D((2,2)))
+print(f'Precision: {pre.result().numpy()}')
+print(f'Recall: {re.result().numpy()}')
+print(f'Accuracy: {acc.result().numpy()}')
 
-# 3rd Convolution
-model_2.add(Conv2D(128, (3,3), activation='relu', padding='same',
-                  kernel_initializer='he_normal', 
-                  kernel_regularizer='l2'))
-model_2.add(MaxPooling2D((2,2)))
-
-# 4th Convolution
-model_2.add(Conv2D(128, (3,3), activation='relu', padding='same',
-                  kernel_initializer='he_normal', 
-                  kernel_regularizer='l2'))
-model_2.add(MaxPooling2D((2,2)))
-
-# Flatten layer
-model_2.add(Flatten())
-
-# Fully connected layers
-model_2.add(Dense(64, activation='relu',
-                  kernel_initializer='he_normal', 
-                  kernel_regularizer='l2'))
-model_2.add(Dense(9, activation='softmax'))
-
-model_2.compile('adam', 
-              loss='categorical_crossentropy', 
-              metrics=['accuracy'])
-model_2.summary()
-
-# ---------------------------------------------------------------------------------------------------------------------------------------------------- #
-
-###############
-##  Model 3  ##
-###############
-
-model_3 = Sequential()
-
-# 1st Convolution
-model_3.add(Conv2D(16, (3, 3), activation='relu',input_shape=(256,256, 3)))
-model_3.add(Conv2D(16, (3, 3), activation='relu'))
-model_3.add(MaxPooling2D((2, 2)))
-
-# 2nd Convolution
-model_3.add(Conv2D(32, (3, 3), activation='relu'))
-model_3.add(Conv2D(32, (3, 3), activation='relu'))
-model_3.add(MaxPooling2D((2, 2)))
-
-# 3rd Convolution
-model_3.add(Conv2D(64, (3, 3), activation='relu'))
-model_3.add(Conv2D(64, (3, 3), activation='relu'))
-model_3.add(MaxPooling2D((2, 2)))
-
-# 4th Convolution
-model_3.add(Conv2D(128, (3, 3), activation='relu'))
-model_3.add(Conv2D(128, (3, 3), activation='relu'))
-model_3.add(MaxPooling2D((2, 2)))
-
-# Flattened the layer
-model_3.add(Flatten())
-
-# Fully connected layers
-model_3.add(Dense(64, activation='relu'))
-model_3.add(Dense(9, activation='softmax'))
-
-model_3.compile('adam', 
-              loss='categorical_crossentropy', 
-              metrics=['accuracy'])
-model_3.summary()
+model_1.save('M1.h5')
 
 # ---------------------------------------------------------------------------------------------------------------------------------------------------- #
 
@@ -230,88 +193,70 @@ model_4.compile('adam',
               metrics=['accuracy'])
 model_4.summary()
 
+hist_4 = model_4.fit(train_dataset, epochs = num_epochs, validation_data = val_dataset)
+
+model_perf_vis(hist_4)
+
+for batch in test_dataset.as_numpy_iterator():
+    X, y = batch
+    yhat = model_4.predict(X)
+    pre.update_state(y, yhat)
+    re.update_state(y, yhat)
+    acc.update_state(y, yhat)
+
+print(f'Precision: {pre.result().numpy()}')
+print(f'Recall: {re.result().numpy()}')
+print(f'Accuracy: {acc.result().numpy()}')
+
+model_4.save('M4.h5')
+
 # ---------------------------------------------------------------------------------------------------------------------------------------------------- #
 
-###############
-##  Model 5  ##
-###############
-
-model_5 = Sequential()
+model_4_128 = Sequential()
 
 # 1st Convolution
-model_5.add(Conv2D(32, (3, 3), activation='relu',
-                        input_shape=(256, 256, 3)))
-model_5.add(MaxPooling2D((2, 2)))
+model_4_128.add(Conv2D(32, (3, 3), activation='relu',
+                        input_shape=(128, 128, 3)))
+model_4_128.add(MaxPooling2D((2, 2)))
 
 # 2nd Convolution
-model_5.add(Conv2D(64, (3, 3), activation='relu'))
-model_5.add(MaxPooling2D((2, 2)))
+model_4_128.add(Conv2D(64, (3, 3), activation='relu'))
+model_4_128.add(MaxPooling2D((2, 2)))
 
 # 3rd Convolution
-model_5.add(Conv2D(128, (3, 3), activation='relu'))
-model_5.add(MaxPooling2D((2, 2)))
+model_4_128.add(Conv2D(128, (3, 3), activation='relu'))
+model_4_128.add(MaxPooling2D((2, 2)))
 
 # 4th Convolution
-model_5.add(Conv2D(128, (3, 3), activation='relu'))
-model_5.add(MaxPooling2D((2, 2)))
+model_4_128.add(Conv2D(128, (3, 3), activation='relu'))
+model_4_128.add(MaxPooling2D((2, 2)))
 
 # Flattened the layer
-model_5.add(Flatten())
+model_4_128.add(Flatten())
 
 # Fully connected layers
-model_5.add(Dense(64, activation='relu'))
-model_5.add(Dense(9, activation='softmax'))
+model_4_128.add(Dense(64, activation='relu'))
+model_4_128.add(Dense(9, activation='softmax'))
 
-model_5.compile('adam', 
+model_4_128.compile('adam', 
               loss='categorical_crossentropy', 
               metrics=['accuracy'])
-model_5.summary()
+model_4_128.summary()
 
+hist_4_128 = model_4_128.fit(train_dataset_128, epochs = num_epochs, validation_data = val_dataset_128)
+
+model_perf_vis(hist_4_128)
+
+for batch in test_dataset_128.as_numpy_iterator():
+    X, y = batch
+    yhat = model_4_128.predict(X)
+    pre.update_state(y, yhat)
+    re.update_state(y, yhat)
+    acc.update_state(y, yhat)
+
+print(f'Precision: {pre.result().numpy()}')
+print(f'Recall: {re.result().numpy()}')
+print(f'Accuracy: {acc.result().numpy()}')
+
+model_4_128.save('M4_128.h5')
 # ---------------------------------------------------------------------------------------------------------------------------------------------------- #
-
-###############
-##  Model 6  ##
-###############
-
-model_6 = Sequential()
-
-# 1st Convolution block
-model_6.add(layers.Conv2D(16, (3, 3), activation='relu', padding='same', 
-                           input_shape=(256, 256, 3)))
-model_6.add(layers.Conv2D(16, (3, 3), activation='relu'))
-model_6.add(layers.MaxPooling2D((2, 2)))
-
-# 2nd Convolution block
-model_6.add(layers.Conv2D(32, (3, 3), activation='relu', padding='same'))
-model_6.add(layers.Conv2D(32, (3, 3), activation='relu'))
-model_6.add(layers.MaxPooling2D((2, 2)))
-
-# 3rd Convolution block
-model_6.add(layers.Conv2D(64, (3, 3), activation='relu', padding='same'))
-model_6.add(layers.Conv2D(64, (3, 3), activation='relu'))
-model_6.add(layers.MaxPooling2D((2, 2)))
-
-# 4th Convolution block
-model_6.add(layers.Conv2D(96, (3, 3), dilation_rate=(2,2), activation='relu', 
-                           padding='same'))
-model_6.add(layers.Conv2D(96, (3, 3), activation='relu'))
-model_6.add(layers.MaxPooling2D((2, 2)))
-
-# 5th Convolution block
-model_6.add(layers.Conv2D(128, (3, 3), dilation_rate=(2, 2), activation='relu', 
-                           padding='same'))
-model_6.add(layers.Conv2D(128, (3, 3), activation='relu'))
-model_6.add(layers.MaxPooling2D((2, 2)))
-
-# Flattened the layer
-model_6.add(layers.Flatten())
-
-# Fully connected layers
-model_6.add(layers.Dense(64, activation='relu'))
-model_6.add(layers.Dropout(0.4))
-model_6.add(layers.Dense(9, activation='softmax'))
-
-model_6.compile('adam', 
-              loss='categorical_crossentropy', 
-              metrics=['accuracy'])
-model_6.summary()
