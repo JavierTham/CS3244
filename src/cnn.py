@@ -257,4 +257,6 @@ for batch in test_dataset_128.as_numpy_iterator():
 print(f'Precision: {pre.result().numpy()}')
 print(f'Recall: {re.result().numpy()}')
 print(f'Accuracy: {acc.result().numpy()}')
+
+model_4_128.save('M4_128.h5')
 # ---------------------------------------------------------------------------------------------------------------------------------------------------- #
